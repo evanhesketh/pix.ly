@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g, 
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
+from utils import show_image
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -50,7 +51,21 @@ def add_photo():
     """ Add photo data to database and upload to AWS"""
 
     uploaded_photo = request.files["photo"]
+    print(uploaded_photo, " uploaded photo")
 
     s3.upload_fileobj(uploaded_photo, BUCKET_NAME, "photo1")
 
-    return jsonify(status='uploaded')
+    return redirect('/pics')
+
+# @app.get('/photos')
+# def get_photos():
+#     """ Gets all photos from AWS server """
+
+#     photo = s3.download_file(BUCKET_NAME, 'photo1', <FileStorage: 'takeoff.jpeg' ('image/jpeg')>)
+#     print("photo ", photo)
+#     return render_template('photos.html', photo=photo)
+
+@app.route("/pics")
+def list():
+    contents = show_image(BUCKET_NAME)
+    return render_template('photos.html', contents=contents)
