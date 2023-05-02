@@ -8,6 +8,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
 from utils import show_image
+from werkzeug.utils import secure_filename
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -53,9 +54,11 @@ def add_photo():
     uploaded_photo = request.files["photo"]
     print(uploaded_photo, " uploaded photo")
 
-    s3.upload_fileobj(uploaded_photo, BUCKET_NAME, "photo1")
+    file_name = secure_filename(uploaded_photo.filename)
 
-    return redirect('/pics')
+    s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
+
+    return jsonify(key="Succes")
 
 # @app.get('/photos')
 # def get_photos():
@@ -65,7 +68,7 @@ def add_photo():
 #     print("photo ", photo)
 #     return render_template('photos.html', photo=photo)
 
-@app.route("/pics")
+@app.get("/pics")
 def list():
     contents = show_image(BUCKET_NAME)
     return render_template('photos.html', contents=contents)
