@@ -3,7 +3,7 @@ import boto3
 from dotenv import load_dotenv
 
 
-from flask import Flask, render_template, request, flash, redirect, session, g
+from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
@@ -17,6 +17,7 @@ CURR_USER_KEY = "curr_user"
 
 BUCKET_NAME = os.environ['BUCKET_NAME']
 
+REGION = os.environ['REGION']
 
 app = Flask(__name__)
 
@@ -30,31 +31,26 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 # connect_db(app)
 
-# s3 = boto3.client(
-#     "s3",
-#     "us-east-1",
-#     aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-#     aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-# )
-# response = s3.list_buckets()
+s3 = boto3.client(
+    "s3",
+    "us-east-1",
+    aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+    aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+)
+response = s3.list_buckets()
 
-# # Output the bucket names
-# print('Existing buckets:')
-# for bucket in response['Buckets']:
-#     print(f'  {bucket["Name"]}')
+# Output the bucket names
+print('Existing buckets:')
+for bucket in response['Buckets']:
+    print(f'  {bucket["Name"]}')
 
 
 @app.post('/add-photo')
 def add_photo():
     """ Add photo data to database and upload to AWS"""
 
-    s3 = boto3.client(
-        "s3",
-        "us-east-1",
-        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-    )
-
     uploaded_photo = request.files["photo"]
 
-    s3.upload_fileobj(uploaded_photo, BUCKET_NAME)
+    s3.upload_fileobj(uploaded_photo, BUCKET_NAME, "photo1")
+
+    return jsonify(status='uploaded')
