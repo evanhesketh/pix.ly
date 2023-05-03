@@ -11,6 +11,7 @@ from utils import show_image
 from werkzeug.utils import secure_filename
 from PIL import Image
 from PIL.ExifTags import TAGS
+from models import db, connect_db, Image
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -33,7 +34,7 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 # app.config['AWS_SECRET_ACCESS_KEY'] = os.environ['AWS_SECRET_ACCESS_KEY']
 # toolbar = DebugToolbarExtension(app)
 
-# connect_db(app)
+connect_db(app)
 
 s3 = boto3.client(
     "s3",
@@ -54,17 +55,11 @@ def add_photo():
     """ Add photo data to database and upload to AWS"""
 
     uploaded_photo = request.files["photo"]
-    print("uploaded photo.tell", uploaded_photo.tell())
 
     image = Image.open(uploaded_photo)
     metadata = image.getexif()
 
-    print("image ", image)
-
-    print("uploaded photo.tell", uploaded_photo.tell())
-    print("uploaded photo.tell", uploaded_photo.tell())
-
-    # breakpoint()
+    data_with_tags = {}
 
     # iterating over all EXIF data fields
     for tag_id in metadata:
@@ -74,17 +69,27 @@ def add_photo():
     # decode bytes
         if isinstance(data, bytes):
             data = data.decode()
-        print(f"{tag:25}: {data}")
 
-    # print("metadata ", metadata)
+        data_with_tags[tag] = data
+        # print(f"{tag:25}: {data}")
+
+    print("data_with_tags ", data_with_tags)
+
+    print("metadata ", metadata)
 
 
     uploaded_photo.seek(0)
-
     file_name = uploaded_photo.filename
 
-    s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
+    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
+    make = data_with_tags.get('Make')
+    model = data_with_tags.get('Model')
+    date = data_with_tags.get("DateTime")
 
+    Image.add_image(url=url, make=make, model=model, date=date)
+    db.session.commit()
+
+    s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
 
     return jsonify(key="Succes")
 
