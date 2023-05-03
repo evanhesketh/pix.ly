@@ -9,6 +9,8 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
 from utils import show_image
 from werkzeug.utils import secure_filename
+from PIL import Image
+from PIL.ExifTags import TAGS
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -52,7 +54,22 @@ def add_photo():
     """ Add photo data to database and upload to AWS"""
 
     uploaded_photo = request.files["photo"]
-    print(uploaded_photo, " uploaded photo")
+
+    image = Image.open(uploaded_photo)
+    metadata = image.getexif()
+
+
+    # iterating over all EXIF data fields
+    for tag_id in metadata:
+    # get the tag name, instead of human unreadable tag id
+        tag = TAGS.get(tag_id, tag_id)
+        data = metadata.get(tag_id)
+    # decode bytes
+        if isinstance(data, bytes):
+            data = data.decode()
+        print(f"{tag:25}: {data}")
+
+    # print("metadata ", metadata)
 
     file_name = secure_filename(uploaded_photo.filename)
 
@@ -67,6 +84,7 @@ def add_photo():
 #     photo = s3.download_file(BUCKET_NAME, 'photo1', <FileStorage: 'takeoff.jpeg' ('image/jpeg')>)
 #     print("photo ", photo)
 #     return render_template('photos.html', photo=photo)
+
 
 @app.get("/pics")
 def list():
