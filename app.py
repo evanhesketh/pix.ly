@@ -82,17 +82,22 @@ def add_photo():
     uploaded_photo.seek(0)
     file_name = uploaded_photo.filename
 
-    url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
+    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
+    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
 
-    Photo.add_image(url=url, make=make, model=model, date=date)
-    db.session.commit()
+    try:
+        Photo.add_image(url=url, make=make, model=model, date=date)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(error="Duplicate file name")
 
     s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
 
-    return jsonify(key="Succes")
+    return jsonify(message="Photo added")
 
 # @app.get('/photos')
 # def get_photos():
@@ -104,7 +109,8 @@ def add_photo():
 
 
 @app.get("/pics")
-def list():
-    contents = show_image(BUCKET_NAME)
-    # contents = ["https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/John-Digweed-EDCLV-2017-pc-aLIVE-Coverage.jpeg"]
-    return render_template('photos.html', contents=contents)
+def get_pictures():
+    photos = Photo.query.all()
+    serialized = [p.serialize() for p in photos]
+
+    return jsonify(serialized)

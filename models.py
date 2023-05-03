@@ -18,7 +18,8 @@ class Photo(db.Model):
 
     url = db.Column(
         db.Text,
-        nullable=False
+        nullable=False,
+        unique=True
     )
 
     make = db.Column(
@@ -33,6 +34,17 @@ class Photo(db.Model):
         db.Text
     )
 
+    def serialize(self):
+        """Serialize to dictionary"""
+
+        return {
+            "id": self.id,
+            "url": self.url,
+            "make": self.make,
+            "model": self.model,
+            "date": self.date
+        }
+
 
     @classmethod
     def add_image(cls, url, make, model, date):
@@ -46,6 +58,9 @@ class Photo(db.Model):
         )
 
         db.session.add(photo)
+
+        return photo
+
 
 def connect_db(app):
     """Connect this database to provided Flask app.
