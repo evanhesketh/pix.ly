@@ -54,10 +54,17 @@ def add_photo():
     """ Add photo data to database and upload to AWS"""
 
     uploaded_photo = request.files["photo"]
+    print("uploaded photo.tell", uploaded_photo.tell())
 
     image = Image.open(uploaded_photo)
     metadata = image.getexif()
 
+    print("image ", image)
+
+    print("uploaded photo.tell", uploaded_photo.tell())
+    print("uploaded photo.tell", uploaded_photo.tell())
+
+    # breakpoint()
 
     # iterating over all EXIF data fields
     for tag_id in metadata:
@@ -71,9 +78,13 @@ def add_photo():
 
     # print("metadata ", metadata)
 
-    file_name = secure_filename(uploaded_photo.filename)
+
+    uploaded_photo.seek(0)
+
+    file_name = uploaded_photo.filename
 
     s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
+
 
     return jsonify(key="Succes")
 
@@ -89,4 +100,5 @@ def add_photo():
 @app.get("/pics")
 def list():
     contents = show_image(BUCKET_NAME)
+    # contents = ["https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/John-Digweed-EDCLV-2017-pc-aLIVE-Coverage.jpeg"]
     return render_template('photos.html', contents=contents)
