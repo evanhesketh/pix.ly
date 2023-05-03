@@ -11,7 +11,7 @@ from utils import show_image
 from werkzeug.utils import secure_filename
 from PIL import Image
 from PIL.ExifTags import TAGS
-from models import db, connect_db, Image
+from models import db, connect_db, Photo
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -26,6 +26,7 @@ REGION = os.environ['REGION']
 
 app = Flask(__name__)
 
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", 'postgresql:///pixly')
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
@@ -81,12 +82,12 @@ def add_photo():
     uploaded_photo.seek(0)
     file_name = uploaded_photo.filename
 
-    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
+    url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
 
-    Image.add_image(url=url, make=make, model=model, date=date)
+    Photo.add_image(url=url, make=make, model=model, date=date)
     db.session.commit()
 
     s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
