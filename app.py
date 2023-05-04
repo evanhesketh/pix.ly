@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
 from utils import show_image
 from werkzeug.utils import secure_filename
-from PIL import Image
+from PIL import Image, ImageOps
 from PIL.ExifTags import TAGS
 from models import db, connect_db, Photo
 
@@ -62,6 +62,7 @@ def add_photo():
 
     image = Image.open(uploaded_photo)
     metadata = image.getexif()
+    ImageOps.contain(image, (200, 300))
 
     data_with_tags = {}
 
@@ -85,8 +86,8 @@ def add_photo():
     uploaded_photo.seek(0)
     file_name = uploaded_photo.filename
 
-    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
-    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
+    url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
+    # url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
@@ -94,7 +95,7 @@ def add_photo():
     try:
         photo = Photo.add_image(url=url, make=make, model=model, date=date)
         db.session.commit()
-        s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
+        s3.upload_fileobj(image, BUCKET_NAME, file_name)
         photo_serialized = photo.serialize()
         return jsonify(photo=photo_serialized)
 
