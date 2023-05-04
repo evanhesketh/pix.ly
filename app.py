@@ -51,7 +51,7 @@ for bucket in response['Buckets']:
     print(f'  {bucket["Name"]}')
 
 
-@app.post('/add-photo')
+@app.post('/upload')
 def add_photo():
     """ Add photo data to database and upload to AWS"""
 
@@ -108,9 +108,10 @@ def add_photo():
 #     return render_template('photos.html', photo=photo)
 
 
-@app.get("/pics")
+@app.get("/photos")
 def get_pictures():
     photos = Photo.query.all()
     serialized = [p.serialize() for p in photos]
 
-    return jsonify(serialized)
+    return jsonify(photos=serialized)
+
