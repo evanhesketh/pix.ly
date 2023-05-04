@@ -13,6 +13,7 @@ from werkzeug.utils import secure_filename
 from PIL import Image, ImageOps
 from PIL.ExifTags import TAGS
 from models import db, connect_db, Photo
+import io
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -61,8 +62,19 @@ def add_photo():
     uploaded_photo = request.files["photo"]
 
     image = Image.open(uploaded_photo)
+    print("image.formt: ", image.format)
+
+
+
     metadata = image.getexif()
-    ImageOps.contain(image, (200, 300))
+    resized_image = ImageOps.contain(image, (600, 1000))
+    print("resized_image.format", resized_image.format)
+    # print("uploaded_photo.filename", uploaded_photo.filename)
+    # print("resized_image.filename", resized_image.filename)
+
+    in_mem_file = io.BytesIO()
+    resized_image.save(in_mem_file, format="JPEG")
+    in_mem_file.seek(0)
 
     data_with_tags = {}
 
@@ -83,7 +95,7 @@ def add_photo():
     print("metadata ", metadata)
 
 
-    uploaded_photo.seek(0)
+    resized_image.seek(0)
     file_name = uploaded_photo.filename
 
     url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
@@ -95,7 +107,7 @@ def add_photo():
     try:
         photo = Photo.add_image(url=url, make=make, model=model, date=date)
         db.session.commit()
-        s3.upload_fileobj(image, BUCKET_NAME, file_name)
+        s3.upload_fileobj(in_mem_file, BUCKET_NAME, file_name)
         photo_serialized = photo.serialize()
         return jsonify(photo=photo_serialized)
 
