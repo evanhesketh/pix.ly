@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 
 from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
+from flask_cors import CORS
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
@@ -25,6 +26,7 @@ BUCKET_NAME = os.environ['BUCKET_NAME']
 REGION = os.environ['REGION']
 
 app = Flask(__name__)
+CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", 'postgresql:///pixly')
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
@@ -54,6 +56,7 @@ for bucket in response['Buckets']:
 @app.post('/upload')
 def add_photo():
     """ Add photo data to database and upload to AWS"""
+    print ("request.files", request.files)
 
     uploaded_photo = request.files["photo"]
 
@@ -89,28 +92,21 @@ def add_photo():
     date = data_with_tags.get("DateTime")
 
     try:
-        Photo.add_image(url=url, make=make, model=model, date=date)
+        photo = Photo.add_image(url=url, make=make, model=model, date=date)
         db.session.commit()
+        s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
+        photo_serialized = photo.serialize()
+        return jsonify(photo=photo_serialized)
+
     except IntegrityError:
         db.session.rollback()
         return jsonify(error="Duplicate file name")
-
-    s3.upload_fileobj(uploaded_photo, BUCKET_NAME, file_name)
-
-    return jsonify(message="Photo added")
-
-# @app.get('/photos')
-# def get_photos():
-#     """ Gets all photos from AWS server """
-
-#     photo = s3.download_file(BUCKET_NAME, 'photo1', <FileStorage: 'takeoff.jpeg' ('image/jpeg')>)
-#     print("photo ", photo)
-#     return render_template('photos.html', photo=photo)
 
 
 @app.get("/photos")
 def get_pictures():
     photos = Photo.query.all()
+    print("photos, ", photos)
     serialized = [p.serialize() for p in photos]
 
     return jsonify(photos=serialized)
