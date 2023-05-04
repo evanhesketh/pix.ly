@@ -22,6 +22,12 @@ class Photo(db.Model):
         unique=True
     )
 
+    key = db.Column(
+        db.Text,
+        nullable=False,
+        unique=True
+    )
+
     make = db.Column(
         db.Text
     )
@@ -40,6 +46,7 @@ class Photo(db.Model):
         return {
             "id": self.id,
             "url": self.url,
+            "key": self.key,
             "make": self.make,
             "model": self.model,
             "date": self.date
@@ -47,11 +54,12 @@ class Photo(db.Model):
 
 
     @classmethod
-    def add_image(cls, url, make, model, date):
+    def add_image(cls, url, key, make, model, date):
         """Add image to db"""
 
         photo = Photo(
             url=url,
+            key=key,
             make=make,
             model=model,
             date=date

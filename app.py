@@ -14,6 +14,9 @@ from PIL import Image, ImageOps
 from PIL.ExifTags import TAGS
 from models import db, connect_db, Photo
 import io
+from io import BytesIO
+import urllib.request
+from urllib.request import urlopen
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -98,14 +101,15 @@ def add_photo():
     resized_image.seek(0)
     file_name = uploaded_photo.filename
 
-    url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
-    # url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
+    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
+    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
+    key = file_name
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
 
     try:
-        photo = Photo.add_image(url=url, make=make, model=model, date=date)
+        photo = Photo.add_image(url=url, key=key, make=make, model=model, date=date)
         db.session.commit()
         s3.upload_fileobj(in_mem_file, BUCKET_NAME, file_name)
         photo_serialized = photo.serialize()
@@ -123,4 +127,54 @@ def get_pictures():
     serialized = [p.serialize() for p in photos]
 
     return jsonify(photos=serialized)
+
+@app.post("/edit")
+def edit_photo():
+    photo_key = request.json["key"]
+
+    file_name = photo_key.split('.')
+
+    bw_file_name = f'{file_name[0]}-bw.{file_name[1]}'
+
+    # img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
+    img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
+    metadata = img_to_edit.getexif()
+
+    data_with_tags = {}
+    # iterating over all EXIF data fields
+    for tag_id in metadata:
+    # get the tag name, instead of human unreadable tag id
+        tag = TAGS.get(tag_id, tag_id)
+        data = metadata.get(tag_id)
+    # decode bytes
+        if isinstance(data, bytes):
+            data = data.decode()
+
+        data_with_tags[tag] = data
+        # print(f"{tag:25}: {data}")
+
+    bw_image = ImageOps.grayscale(image=img_to_edit)
+
+    in_mem_file = io.BytesIO()
+    bw_image.save(in_mem_file, format="JPEG")
+    in_mem_file.seek(0)
+
+    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
+    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_file_name}"
+    key = bw_file_name
+    make = data_with_tags.get('Make')
+    model = data_with_tags.get('Model')
+    date = data_with_tags.get("DateTime")
+
+    try:
+        photo = Photo.add_image(url=url, key=key, make=make, model=model, date=date)
+        db.session.commit()
+        s3.upload_fileobj(in_mem_file, BUCKET_NAME, bw_file_name)
+        photo_serialized = photo.serialize()
+        return jsonify(photo=photo_serialized)
+
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(error="Duplicate file name")
+
 
