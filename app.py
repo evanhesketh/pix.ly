@@ -106,7 +106,7 @@ def add_photo():
 
 @app.get("/photos")
 def get_pictures():
-    """ Gets image data from database and returns json: 
+    """ Gets image data from database and returns json:
     {large_url:"http://....", small_url:"http://...", key:"bw-img.jpg", make:"Nikon",
     model:"D70", date:"12-03-22"""
 
@@ -127,8 +127,8 @@ def edit_photo():
     photo_key = request.json["key"]
     method = request.json["method"]
 
-    img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
-    # img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
+    # img_to_edit = Image.open(urlopen(photo_key))
+    img_to_edit = Image.open(urlopen(photo_key))
 
     metadata = img_to_edit.getexif()
 

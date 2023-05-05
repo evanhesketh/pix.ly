@@ -28,10 +28,10 @@ def b_and_w(photo_key, img_to_edit):
     bw_large_image.save(in_mem_file_large, format="JPEG")
     in_mem_file_large.seek(0)
 
-    small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_small_file_name}"
-    large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_large_file_name}"
-#     small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_small_file_name}"
-#     large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_large_file_name}"
+#     small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_small_file_name}"
+#     large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_large_file_name}"
+    small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_small_file_name}"
+    large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_large_file_name}"
 
     return {'large_url': large_url, 'small_url': small_url, 'large_file_name': bw_large_file_name,
             'small_file_name': bw_small_file_name, 'large_file': in_mem_file_large,
@@ -63,10 +63,10 @@ def posterize(photo_key, img_to_edit):
     pst_large_image.save(in_mem_file_large, format="JPEG")
     in_mem_file_large.seek(0)
 
-    small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{pst_small_file_name}"
-    large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{pst_large_file_name}"
-#     small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_small_file_name}"
-#     large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_large_file_name}"
+#     small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{pst_small_file_name}"
+#     large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{pst_large_file_name}"
+    small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_small_file_name}"
+    large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_large_file_name}"
 
     return {'large_url': large_url, 'small_url': small_url, 'large_file_name': pst_large_file_name,
             'small_file_name': pst_small_file_name, 'large_file': in_mem_file_large,
