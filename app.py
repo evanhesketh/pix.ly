@@ -17,7 +17,7 @@ import io
 from io import BytesIO
 import urllib.request
 from urllib.request import urlopen
-from filter_functions import b_and_w
+from filter_functions import b_and_w, posterize
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -132,6 +132,7 @@ def get_pictures():
 @app.post("/edit")
 def edit_photo():
     photo_key = request.json["key"]
+    method = request.json["method"]
 
     file_name = photo_key.split('.')
 
@@ -160,12 +161,16 @@ def edit_photo():
     # bw_image.save(in_mem_file, format="JPEG")
     # in_mem_file.seek(0)
 
-    edited_file_data = b_and_w(file_name, img_to_edit)
+    edited_file_data = ""
 
-    print("edidted_file_data[file]:", edited_file_data["file"])
+    if method == 'bw':
+        edited_file_data = b_and_w(file_name, img_to_edit)
+    if method == 'posterize':
+        edited_file_data = posterize(file_name, img_to_edit)
+ 
+    # print("edidted_file_data[file]:", edited_file_data["file"])
 
-    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_file_name}"
-    # url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_file_name}"
+   
     url = edited_file_data['url']
     key = edited_file_data['edited_file_name']
     make = data_with_tags.get('Make')
