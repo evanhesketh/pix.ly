@@ -14,6 +14,8 @@ def b_and_w(photo_key, img_to_edit):
     bw_small_file_name = f'sm-{file_name[0]}-bw.{file_name[1]}'
     bw_large_file_name = f'lg-{file_name[0]}-bw.{file_name[1]}'
 
+    print("large_file_name", bw_large_file_name)
+
     small_image = Image.open(small_image_data["file"])
     large_image = Image.open(large_image_data["file"])
 

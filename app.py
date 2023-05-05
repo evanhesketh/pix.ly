@@ -86,13 +86,12 @@ def add_photo():
 
         data_with_tags[tag] = data
 
-    key = uploaded_photo.filename
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
 
     try:
-        photo = Photo.add_image(large_url=large_img_data['url'], small_url=small_img_data["url"], key=key, make=make, model=model, date=date)
+        photo = Photo.add_image(large_url=large_img_data['url'], small_url=small_img_data["url"], key=large_img_data['file_name'], make=make, model=model, date=date)
         db.session.commit()
         s3.upload_fileobj(large_img_data["file"], BUCKET_NAME, large_img_data["file_name"])
         s3.upload_fileobj(small_img_data["file"], BUCKET_NAME, small_img_data["file_name"])
@@ -127,8 +126,11 @@ def edit_photo():
     photo_key = request.json["key"]
     method = request.json["method"]
 
+    print("photo_key", photo_key)
+    print("trying to open...", f"https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}")
+
     # img_to_edit = Image.open(urlopen(photo_key))
-    img_to_edit = Image.open(urlopen(photo_key))
+    img_to_edit = Image.open(urlopen(f"https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}"))
 
     metadata = img_to_edit.getexif()
 
