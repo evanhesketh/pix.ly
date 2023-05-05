@@ -17,6 +17,7 @@ import io
 from io import BytesIO
 import urllib.request
 from urllib.request import urlopen
+from filter_functions import b_and_w
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -101,8 +102,8 @@ def add_photo():
     resized_image.seek(0)
     file_name = uploaded_photo.filename
 
-    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
-    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
+    url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
+    # url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
     key = file_name
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
@@ -134,10 +135,10 @@ def edit_photo():
 
     file_name = photo_key.split('.')
 
-    bw_file_name = f'{file_name[0]}-bw.{file_name[1]}'
+    # bw_file_name = f'{file_name[0]}-bw.{file_name[1]}'
 
-    # img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
-    img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
+    img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
+    # img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
     metadata = img_to_edit.getexif()
 
     data_with_tags = {}
@@ -153,15 +154,20 @@ def edit_photo():
         data_with_tags[tag] = data
         # print(f"{tag:25}: {data}")
 
-    bw_image = ImageOps.grayscale(image=img_to_edit)
+    # bw_image = ImageOps.grayscale(image=img_to_edit)
 
-    in_mem_file = io.BytesIO()
-    bw_image.save(in_mem_file, format="JPEG")
-    in_mem_file.seek(0)
+    # in_mem_file = io.BytesIO()
+    # bw_image.save(in_mem_file, format="JPEG")
+    # in_mem_file.seek(0)
 
-    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
-    url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_file_name}"
-    key = bw_file_name
+    edited_file_data = b_and_w(file_name, img_to_edit)
+
+    print("edidted_file_data[file]:", edited_file_data["file"])
+
+    # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_file_name}"
+    # url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_file_name}"
+    url = edited_file_data['url']
+    key = edited_file_data['edited_file_name']
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
@@ -169,7 +175,7 @@ def edit_photo():
     try:
         photo = Photo.add_image(url=url, key=key, make=make, model=model, date=date)
         db.session.commit()
-        s3.upload_fileobj(in_mem_file, BUCKET_NAME, bw_file_name)
+        s3.upload_fileobj(edited_file_data["file"], BUCKET_NAME, edited_file_data['edited_file_name'])
         photo_serialized = photo.serialize()
         return jsonify(photo=photo_serialized)
 
