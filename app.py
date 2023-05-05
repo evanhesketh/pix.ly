@@ -171,10 +171,10 @@ def edit_photo():
         db.session.commit()
         s3.upload_fileobj(in_mem_file, BUCKET_NAME, bw_file_name)
         photo_serialized = photo.serialize()
-        return jsonify(photo=photo_serialized)
+        return (jsonify(photo=photo_serialized), 201)
 
     except IntegrityError:
         db.session.rollback()
-        return jsonify(error="Duplicate file name")
+        return (jsonify(error="Duplicate file name"), 400)
 
 
