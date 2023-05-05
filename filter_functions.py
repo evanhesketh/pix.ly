@@ -4,6 +4,7 @@ from utils import create_large_image, create_small_image
 
 
 def b_and_w(photo_key, img_to_edit):
+    """ create new black and white version of small and large """
 
     file_name = photo_key.split('.')
 
@@ -27,10 +28,10 @@ def b_and_w(photo_key, img_to_edit):
     bw_large_image.save(in_mem_file_large, format="JPEG")
     in_mem_file_large.seek(0)
 
-    # small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_small_file_name}"
-    # large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_large_file_name}"
-    small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_small_file_name}"
-    large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_large_file_name}"
+    small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_small_file_name}"
+    large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{bw_large_file_name}"
+#     small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_small_file_name}"
+#     large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{bw_large_file_name}"
 
     return {'large_url': large_url, 'small_url': small_url, 'large_file_name': bw_large_file_name,
             'small_file_name': bw_small_file_name, 'large_file': in_mem_file_large,
@@ -38,6 +39,7 @@ def b_and_w(photo_key, img_to_edit):
 
 
 def posterize(photo_key, img_to_edit):
+    """ create new posterized version of small/large images"""
 
     file_name = photo_key.split('.')
 
@@ -61,10 +63,10 @@ def posterize(photo_key, img_to_edit):
     pst_large_image.save(in_mem_file_large, format="JPEG")
     in_mem_file_large.seek(0)
 
-    # small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{pst_small_file_name}"
-    # large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{psg_large_file_name}"
-    small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_small_file_name}"
-    large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_large_file_name}"
+    small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{pst_small_file_name}"
+    large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{pst_large_file_name}"
+#     small_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_small_file_name}"
+#     large_url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{pst_large_file_name}"
 
     return {'large_url': large_url, 'small_url': small_url, 'large_file_name': pst_large_file_name,
             'small_file_name': pst_small_file_name, 'large_file': in_mem_file_large,
@@ -72,17 +74,3 @@ def posterize(photo_key, img_to_edit):
 
 
 
-
-
-
-    # postr_file_name = f'{file_name[0]}-pst.{file_name[1]}'
-
-    # bw_image = ImageOps.posterize(image=img_to_edit, bits=2)
-
-    # in_mem_file = io.BytesIO()
-    # bw_image.save(in_mem_file, format="JPEG")
-    # in_mem_file.seek(0)
-    # # url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{postr_file_name}"
-    # url = f"https://s3.amazonaws.com/evanhesketh-pix.ly/{postr_file_name}"
-
-    # return {'url': url, 'edited_file_name': postr_file_name, 'file': in_mem_file}

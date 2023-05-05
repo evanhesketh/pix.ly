@@ -56,7 +56,11 @@ for bucket in response['Buckets']:
 
 @app.post('/upload')
 def add_photo():
-    """ Add photo data to database and upload to AWS"""
+    """ Add photo data to database and upload to AWS
+    Returns json:
+    {large_url:"http://....", small_url:"http://...", key:"bw-img.jpg", make:"Nikon",
+     model:"D70", date:"12-03-22"
+    """
 
     uploaded_photo = request.files["photo"]
     file_name = uploaded_photo.filename
@@ -102,6 +106,10 @@ def add_photo():
 
 @app.get("/photos")
 def get_pictures():
+    """ Gets image data from database and returns json: 
+    {large_url:"http://....", small_url:"http://...", key:"bw-img.jpg", make:"Nikon",
+    model:"D70", date:"12-03-22"""
+
     photos = Photo.query.all()
     print("photos, ", photos)
     serialized = [p.serialize() for p in photos]
@@ -110,11 +118,17 @@ def get_pictures():
 
 @app.post("/edit")
 def edit_photo():
+    """ takes json data: {'key': 'image.jpg' 'method': 'bw'}.
+    Applies filter method specified by method.
+    Returns json {large_url:"http://....", small_url:"http://...", key:"bw-img.jpg",
+    make:"Nikon",
+    model:"D70", date:"12-03-22"}  """
+
     photo_key = request.json["key"]
     method = request.json["method"]
 
-    # img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
-    img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
+    img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
+    # img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
 
     metadata = img_to_edit.getexif()
 
