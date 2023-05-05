@@ -16,7 +16,13 @@ class Photo(db.Model):
         autoincrement=True
     )
 
-    url = db.Column(
+    large_url = db.Column(
+        db.Text,
+        nullable=False,
+        unique=True
+    )
+
+    small_url = db.Column(
         db.Text,
         nullable=False,
         unique=True
@@ -45,7 +51,8 @@ class Photo(db.Model):
 
         return {
             "id": self.id,
-            "url": self.url,
+            "largeUrl": self.large_url,
+            "smallUrl": self.small_url,
             "key": self.key,
             "make": self.make,
             "model": self.model,
@@ -54,11 +61,12 @@ class Photo(db.Model):
 
 
     @classmethod
-    def add_image(cls, url, key, make, model, date):
+    def add_image(cls, large_url, small_url, key, make, model, date):
         """Add image to db"""
 
         photo = Photo(
-            url=url,
+            large_url=large_url,
+            small_url=small_url,
             key=key,
             make=make,
             model=model,

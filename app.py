@@ -8,7 +8,6 @@ from flask_cors import CORS
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
-from utils import show_image
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageOps
 from PIL.ExifTags import TAGS
@@ -18,6 +17,7 @@ from io import BytesIO
 import urllib.request
 from urllib.request import urlopen
 from filter_functions import b_and_w, posterize
+from utils import create_large_image, create_small_image
 
 # from forms import UserAddForm, LoginForm, MessageForm, CsrfForm, UserUpdateForm
 # from models import db, connect_db, User, Message
@@ -34,13 +34,9 @@ app = Flask(__name__)
 CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", 'postgresql:///pixly')
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
-# app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
-# app.config['AWS_ACCESS_KEY_ID'] = os.environ['AWS_ACCESS_KEY_ID']
-# app.config['AWS_SECRET_ACCESS_KEY'] = os.environ['AWS_SECRET_ACCESS_KEY']
-# toolbar = DebugToolbarExtension(app)
+
 
 connect_db(app)
 
@@ -61,24 +57,17 @@ for bucket in response['Buckets']:
 @app.post('/upload')
 def add_photo():
     """ Add photo data to database and upload to AWS"""
-    print ("request.files", request.files)
 
     uploaded_photo = request.files["photo"]
+    file_name = uploaded_photo.filename
 
     image = Image.open(uploaded_photo)
-    print("image.formt: ", image.format)
 
 
+    large_img_data = create_large_image(image, file_name)
+    small_img_data = create_small_image(image, file_name)
 
     metadata = image.getexif()
-    resized_image = ImageOps.contain(image, (600, 1000))
-    print("resized_image.format", resized_image.format)
-    # print("uploaded_photo.filename", uploaded_photo.filename)
-    # print("resized_image.filename", resized_image.filename)
-
-    in_mem_file = io.BytesIO()
-    resized_image.save(in_mem_file, format="JPEG")
-    in_mem_file.seek(0)
 
     data_with_tags = {}
 
@@ -92,27 +81,17 @@ def add_photo():
             data = data.decode()
 
         data_with_tags[tag] = data
-        # print(f"{tag:25}: {data}")
 
-    print("data_with_tags ", data_with_tags)
-
-    print("metadata ", metadata)
-
-
-    resized_image.seek(0)
-    file_name = uploaded_photo.filename
-
-    url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name}"
-    # url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name}"
-    key = file_name
+    key = uploaded_photo.filename
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
 
     try:
-        photo = Photo.add_image(url=url, key=key, make=make, model=model, date=date)
+        photo = Photo.add_image(large_url=large_img_data['url'], small_url=small_img_data["url"], key=key, make=make, model=model, date=date)
         db.session.commit()
-        s3.upload_fileobj(in_mem_file, BUCKET_NAME, file_name)
+        s3.upload_fileobj(large_img_data["file"], BUCKET_NAME, large_img_data["file_name"])
+        s3.upload_fileobj(small_img_data["file"], BUCKET_NAME, small_img_data["file_name"])
         photo_serialized = photo.serialize()
         return (jsonify(photo=photo_serialized), 201)
 
@@ -134,12 +113,9 @@ def edit_photo():
     photo_key = request.json["key"]
     method = request.json["method"]
 
-    file_name = photo_key.split('.')
+    # img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
+    img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
 
-    # bw_file_name = f'{file_name[0]}-bw.{file_name[1]}'
-
-    img_to_edit = Image.open(urlopen(f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{photo_key}"))
-    # img_to_edit = Image.open(urlopen(f'https://s3.amazonaws.com/evanhesketh-pix.ly/{photo_key}'))
     metadata = img_to_edit.getexif()
 
     data_with_tags = {}
@@ -155,32 +131,25 @@ def edit_photo():
         data_with_tags[tag] = data
         # print(f"{tag:25}: {data}")
 
-    # bw_image = ImageOps.grayscale(image=img_to_edit)
-
-    # in_mem_file = io.BytesIO()
-    # bw_image.save(in_mem_file, format="JPEG")
-    # in_mem_file.seek(0)
-
     edited_file_data = ""
 
     if method == 'bw':
-        edited_file_data = b_and_w(file_name, img_to_edit)
+        edited_file_data = b_and_w(photo_key, img_to_edit)
     if method == 'posterize':
-        edited_file_data = posterize(file_name, img_to_edit)
- 
-    # print("edidted_file_data[file]:", edited_file_data["file"])
+        edited_file_data = posterize(photo_key, img_to_edit)
 
-   
-    url = edited_file_data['url']
-    key = edited_file_data['edited_file_name']
+    large_url = edited_file_data['large_url']
+    small_url = edited_file_data['small_url']
+    key = edited_file_data['large_file_name']
     make = data_with_tags.get('Make')
     model = data_with_tags.get('Model')
     date = data_with_tags.get("DateTime")
 
     try:
-        photo = Photo.add_image(url=url, key=key, make=make, model=model, date=date)
+        photo = Photo.add_image(large_url=large_url, small_url=small_url, key=key, make=make, model=model, date=date)
         db.session.commit()
-        s3.upload_fileobj(edited_file_data["file"], BUCKET_NAME, edited_file_data['edited_file_name'])
+        s3.upload_fileobj(edited_file_data["small_file"], BUCKET_NAME, edited_file_data['small_file_name'])
+        s3.upload_fileobj(edited_file_data["large_file"], BUCKET_NAME, edited_file_data['large_file_name'])
         photo_serialized = photo.serialize()
         return (jsonify(photo=photo_serialized), 201)
 

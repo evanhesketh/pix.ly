@@ -1,13 +1,30 @@
-import boto3
+from PIL import ImageOps
+import io
 
-def show_image(bucket):
-    s3_client = boto3.client('s3')
-    public_urls = []
-    try:
-        for item in s3_client.list_objects(Bucket=bucket)['Contents']:
-            presigned_url = s3_client.generate_presigned_url('get_object', Params = {'Bucket': bucket, 'Key': item['Key']}, ExpiresIn = 100)
-            public_urls.append(presigned_url)
-    except Exception as e:
-        pass
-    # print("[INFO] : The contents inside show_image = ", public_urls)
-    return public_urls
+def create_small_image(image, file_name):
+    small_image = ImageOps.contain(image, (200, 300))
+
+    in_mem_file_small_img = io.BytesIO()
+    small_image.save(in_mem_file_small_img, format="JPEG")
+    in_mem_file_small_img.seek(0)
+
+    file_name_small = f"sm-{file_name}"
+
+    small_url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name_small}"
+    # small_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name_small}"
+
+    return {"file": in_mem_file_small_img, "url": small_url, "file_name": file_name_small}
+
+def create_large_image(image, file_name):
+    large_image = ImageOps.contain(image, (600, 1000))
+
+    in_mem_file_large_img = io.BytesIO()
+    large_image.save(in_mem_file_large_img, format="JPEG")
+    in_mem_file_large_img.seek(0)
+
+    file_name_large = f"lg-{file_name}"
+
+    large_url= f"https://s3.amazonaws.com/evanhesketh-pix.ly/{file_name_large}"
+    # large_url= f"https://s3.us-west-1.amazonaws.com/kmdeakers-pix.ly/{file_name_large}"
+
+    return {"file": in_mem_file_large_img, "url": large_url, "file_name": file_name_large}
