@@ -51,7 +51,7 @@ for bucket in response['Buckets']:
 def add_photo():
     """ Add photo data to database and upload to AWS
     Returns json:
-    {large_url:"http://....", file_name:"bw-img.jpg", make:"Nikon",
+    {id: 1, url:"http://....", fileName:"bw-img.jpg", make:"Nikon",
      model:"D70", date:"12-03-22"
     """
 
@@ -102,8 +102,8 @@ def add_photo():
 @app.get("/photos")
 def get_pictures():
     """ Gets image data from database and returns json:
-    {url:"http://....", file_name:"bw-img.jpg", make:"Nikon",
-    model:"D70", date:"12-03-22"""
+    {id: 1, url:"http://....", fileName:"bw-img.jpg", make:"Nikon",
+    model:"D70", date:"12-03-22"} """
 
     photos = Photo.query.all()
     serialized = [p.serialize() for p in photos]
@@ -115,7 +115,7 @@ def get_pictures():
 def edit_photo():
     """ takes json data: {'fileName': 'image.jpg' 'method': 'bw'}.
     Applies filter method specified by method.
-    Returns json {url:"http://....", file_name:"bw-img.jpg",
+    Returns json {id: 10, url:"http://....", fileName:"bw-img.jpg",
     make:"Nikon",
     model:"D70", date:"12-03-22"}"""
 
